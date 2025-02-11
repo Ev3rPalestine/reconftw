@@ -5062,7 +5062,7 @@ function remove_big_files() {
 function notification() {
 	if [[ -n $1 ]] && [[ -n $2 ]]; then
 		if [[ $NOTIFICATION == true ]]; then
-			NOTIFY="notify -silent"
+			NOTIFY="notify -silent -id $notify_id"
 		else
 			NOTIFY=""
 		fi
