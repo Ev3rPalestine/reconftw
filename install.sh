@@ -1,7 +1,4 @@
-#!/usr/bin/env bash
-
-# Enable strict error handling
-#IFS=$'\n\t'
+#!/bin/bash
 
 # Load main configuration
 CONFIG_FILE="./reconftw.cfg"
@@ -19,24 +16,6 @@ double_check=false
 
 # ARM Detection
 ARCH=$(uname -m)
-case "$ARCH" in
-amd64 | x86_64)
-	IS_ARM="False"
-	;;
-arm64 | armv6l | aarch64)
-	IS_ARM="True"
-	if [[ $ARCH == "arm64" ]]; then
-		RPI_4="True"
-		RPI_3="False"
-	else
-		RPI_4="False"
-		RPI_3="True"
-	fi
-	;;
-*)
-	IS_ARM="False"
-	;;
-esac
 
 # macOS Detection
 IS_MAC=$([[ $OSTYPE == "darwin"* ]] && echo "True" || echo "False")
@@ -88,8 +67,7 @@ declare -A gotools=(
 	["Web-Cache-Vulnerability-Scanner"]="go install -v github.com/Hackmanit/Web-Cache-Vulnerability-Scanner@latest"
 	["subfinder"]="go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"
 	["hakip2host"]="go install -v github.com/hakluke/hakip2host@latest"
-	["gau"]="go install -v github.com/lc/gau/v2/cmd/gau@latest"
-	["mantra"]="go install -v github.com/MrEmpy/mantra@latest"
+	["mantra"]="go install -v github.com/Brosck/mantra@latest"
 	["crt"]="go install -v github.com/cemulus/crt@latest"
 	["s3scanner"]="go install -v github.com/sa7mon/s3scanner@latest"
 	["nmapurls"]="go install -v github.com/sdcampbell/nmapurls@latest"
@@ -99,14 +77,27 @@ declare -A gotools=(
 	["sourcemapper"]="go install -v github.com/denandz/sourcemapper@latest"
 	["jsluice"]="go install -v github.com/BishopFox/jsluice/cmd/jsluice@latest"
 	["urlfinder"]="go install -v github.com/projectdiscovery/urlfinder/cmd/urlfinder@latest"
+	["cent"]="go install -v github.com/xm1k3/cent@latest"
+)
+
+# Declare pipx tools and their paths
+declare -A pipxtools=(
+	["dnsvalidator"]="vortexau/dnsvalidator"
+	["interlace"]="codingo/Interlace"
+	["wafw00f"]="EnableSecurity/wafw00f"
+	["commix"]="commixproject/commix"
+	["urless"]="xnl-h4ck3r/urless"
+	["ghauri"]="r0oth3x49/ghauri"
+	["xnLinkFinder"]="xnl-h4ck3r/xnLinkFinder"
+	["porch-pirate"]="MandConsultingGroup/porch-pirate"
+	["MetaFinder"]="Josue87/MetaFinder"
+	["EmailFinder"]="Josue87/EmailFinder"
+	["p1radup"]="iambouali/p1radup"
 )
 
 # Declare repositories and their paths
 declare -A repos=(
 	["dorks_hunter"]="six2dez/dorks_hunter"
-	["dnsvalidator"]="vortexau/dnsvalidator"
-	["interlace"]="codingo/Interlace"
-	["wafw00f"]="EnableSecurity/wafw00f"
 	["gf"]="tomnomnom/gf"
 	["Gf-Patterns"]="1ndianl33t/Gf-Patterns"
 	["Corsy"]="s0md3v/Corsy"
@@ -114,18 +105,15 @@ declare -A repos=(
 	["fav-up"]="pielco11/fav-up"
 	["massdns"]="blechschmidt/massdns"
 	["Oralyzer"]="r0075h3ll/Oralyzer"
-	["testssl"]="drwetter/testssl.sh"
-	["commix"]="commixproject/commix"
+	["testssl.sh"]="drwetter/testssl.sh"
 	["JSA"]="w9w/JSA"
 	["CloudHunter"]="belane/CloudHunter"
 	["ultimate-nmap-parser"]="shifty0g/ultimate-nmap-parser"
 	["pydictor"]="LandGrey/pydictor"
 	["gitdorks_go"]="damit5/gitdorks_go"
-	["urless"]="xnl-h4ck3r/urless"
 	["smuggler"]="defparam/smuggler"
 	["Web-Cache-Vulnerability-Scanner"]="Hackmanit/Web-Cache-Vulnerability-Scanner"
 	["regulator"]="cramppet/regulator"
-	["ghauri"]="r0oth3x49/ghauri"
 	["gitleaks"]="gitleaks/gitleaks"
 	["trufflehog"]="trufflesecurity/trufflehog"
 	["nomore403"]="devploit/nomore403"
@@ -134,16 +122,13 @@ declare -A repos=(
 	["ffufPostprocessing"]="Damian89/ffufPostprocessing"
 	["misconfig-mapper"]="intigriti/misconfig-mapper"
 	["Spoofy"]="MattKeeley/Spoofy"
-	["xnLinkFinder"]="xnl-h4ck3r/xnLinkFinder"
-	["porch-pirate"]="MandConsultingGroup/porch-pirate"
-	["MetaFinder"]="Josue87/MetaFinder"
-	["EmailFinder"]="Josue87/EmailFinder"
+	["msftrecon"]="Arcanum-Sec/msftrecon"
 )
 
 # Function to display the banner
 function banner() {
 	tput clear
-	cat <<"EOF"
+	cat <<EOF
 
   ██▀███  ▓█████  ▄████▄   ▒█████   ███▄    █   █████▒▄▄▄█████▓ █     █░
  ▓██ ▒ ██▒▓█   ▀ ▒██▀ ▀█  ▒██▒  ██▒ ██ ▀█   █ ▓██   ▒ ▓  ██▒ ▓▒▓█░ █ ░█░
@@ -155,7 +140,7 @@ function banner() {
    ░░   ░    ░   ░        ░ ░ ░ ▒     ░   ░ ░  ░ ░      ░        ░   ░
     ░        ░  ░░ ░          ░ ░           ░                      ░
 
-                 ${reconftw_version}                                         by @six2dez
+ ${reconftw_version}                                         by @six2dez
 
 EOF
 }
@@ -185,6 +170,43 @@ function install_tools() {
 			failed_tools+=("$gotool")
 			double_check=true
 		fi
+	done
+
+	echo -e "\n${bblue}Running: Installing pipx tools (${#repos[@]})${reset}\n"
+
+	local pipx_step=0
+	local failed_pipx_tools=()
+
+	for pipxtool in "${!pipxtools[@]}"; do
+		((pipx_step++))
+		if [[ $upgrade_tools == "false" ]]; then
+			if command -v "$pipxtool" &>/dev/null; then
+				echo -e "[${yellow}SKIPPING${reset}] $pipxtool already installed at $(command -v "$pipxtool")"
+				continue
+			fi
+		fi
+
+		# Install the pipx tool
+		eval pipx install "git+https://github.com/${pipxtools[$pipxtool]}" &>/dev/null
+		exit_status=$?
+		if [[ $exit_status -ne 0 ]]; then
+			echo -e "${red}Failed to install $pipxtool, try manually (${pipx_step}/${#pipxtools[@]})${reset}"
+			failed_pipx_tools+=("$pipxtool")
+			double_check=true
+			continue
+		fi
+
+		# Upgrade the pipx tool
+		eval pipx upgrade "${pipxtool}" &>/dev/null
+		exit_status=$?
+		if [[ $exit_status -ne 0 ]]; then
+			echo -e "${red}Failed to upgrade $pipxtool, try manually (${pipx_step}/${#pipxtools[@]})${reset}"
+			failed_pipx_tools+=("$pipxtool")
+			double_check=true
+			continue
+		fi
+
+		echo -e "${yellow}$pipxtool installed (${pipx_step}/${#pipxtools[@]})${reset}"
 	done
 
 	echo -e "\n${bblue}Running: Installing repositories (${#repos[@]})${reset}\n"
@@ -230,18 +252,23 @@ function install_tools() {
 			continue
 		fi
 
-		# Install dependencies if setup.py exists
-		if [[ -f "setup.py" ]]; then
-			eval "$SUDO pip3 install . $DEBUG_STD" &>/dev/null
+		# Install requirements inside a virtual environment
+		if [[ -s "requirements.txt" ]]; then
+			if [[ ! -f "venv/bin/activate" ]]; then
+				python3 -m venv venv &>/dev/null
+			fi
+			source venv/bin/activate
+			eval "pip3 install --upgrade -r requirements.txt $DEBUG_STD" &>/dev/null
+			deactivate
 		fi
 
 		# Special handling for certain repositories
 		case "$repo" in
 		"massdns")
-			make &>/dev/null && strip -s bin/massdns && "$SUDO" cp bin/massdns /usr/local/bin/ &>/dev/null
+			make &>/dev/null && strip -s bin/massdns && $SUDO cp bin/massdns /usr/local/bin/ &>/dev/null
 			;;
 		"gitleaks")
-			make build &>/dev/null && "$SUDO" cp ./gitleaks /usr/local/bin/ &>/dev/null
+			make build &>/dev/null && $SUDO cp ./gitleaks /usr/local/bin/ &>/dev/null
 			;;
 		"nomore403")
 			go get &>/dev/null
@@ -249,7 +276,7 @@ function install_tools() {
 			chmod +x ./nomore403
 			;;
 		"ffufPostprocessing")
-			git reset --hard origin/main &>/dev/null
+			git reset --hard origin/master &>/dev/null
 			git pull &>/dev/null
 			go build -o ffufPostprocessing main.go &>/dev/null
 			chmod +x ./ffufPostprocessing
@@ -260,13 +287,16 @@ function install_tools() {
 			go build -o misconfig-mapper &>/dev/null
 			chmod +x ./misconfig-mapper
 			;;
+		"trufflehog")
+			go install &>/dev/null
+			;;
 		esac
 
 		# Copy gf patterns if applicable
 		if [[ $repo == "gf" ]]; then
 			cp -r examples ${HOME}/.gf &>/dev/null
 		elif [[ $repo == "Gf-Patterns" ]]; then
-			mv ./*.json ${HOME}/.gf &>/dev/null
+			cp ./*.json ${HOME}/.gf &>/dev/null
 		fi
 
 		# Return to the main directory
@@ -282,10 +312,17 @@ function install_tools() {
 	notify &>/dev/null
 	subfinder &>/dev/null
 	subfinder &>/dev/null
+	mkdir -p ${NUCLEI_TEMPLATES_PATH} &>/dev/null
+	cent init -f &>/dev/null
+	cent -p ${NUCLEI_TEMPLATES_PATH} &>/dev/null
 
 	# Handle failed installations
 	if [[ ${#failed_tools[@]} -ne 0 ]]; then
 		echo -e "\n${red}Failed to install the following Go tools: ${failed_tools[*]}${reset}"
+	fi
+
+	if [[ ${#failed_pipx_tools[@]} -ne 0 ]]; then
+		echo -e "\n${red}Failed to install the following pipx tools: ${failed_pipx_tools[*]}${reset}"
 	fi
 
 	if [[ ${#failed_repos[@]} -ne 0 ]]; then
@@ -340,35 +377,38 @@ function install_golang_version() {
 		if command -v go &>/dev/null && [[ $version == "$(go version | awk '{print $3}')" ]]; then
 			echo -e "${bgreen}Golang is already installed and up to date.${reset}\n"
 		else
-			"$SUDO" rm -rf /usr/local/go &>/dev/null || true
+			$SUDO rm -rf /usr/local/go &>/dev/null || true
 
 			case "$ARCH" in
 			arm64 | aarch64)
-				if [[ $RPI_4 == "True" ]]; then
+				if [[ $IS_MAC == "True" ]]; then
+					wget "https://dl.google.com/go/${version}.darwin-arm64.tar.gz" -O "/tmp/${version}.darwin-arm64.tar.gz" &>/dev/null
+					$SUDO tar -C /usr/local -xzf "/tmp/${version}.darwin-arm64.tar.gz" &>/dev/null
+				else
 					wget "https://dl.google.com/go/${version}.linux-arm64.tar.gz" -O "/tmp/${version}.linux-arm64.tar.gz" &>/dev/null
-					"$SUDO" tar -C /usr/local -xzf "/tmp/${version}.linux-arm64.tar.gz" &>/dev/null
-				elif [[ $RPI_3 == "True" ]]; then
-					wget "https://dl.google.com/go/${version}.linux-armv6l.tar.gz" -O "/tmp/${version}.linux-armv6l.tar.gz" &>/dev/null
-					"$SUDO" tar -C /usr/local -xzf "/tmp/${version}.linux-armv6l.tar.gz" &>/dev/null
+					$SUDO tar -C /usr/local -xzf "/tmp/${version}.linux-arm64.tar.gz" &>/dev/null
+				fi
+				;;
+			armv6l | armv7l)
+				wget "https://dl.google.com/go/${version}.linux-armv6l.tar.gz" -O "/tmp/${version}.linux-armv6l.tar.gz" &>/dev/null
+				$SUDO tar -C /usr/local -xzf "/tmp/${version}.linux-armv6l.tar.gz" &>/dev/null
+				;;
+			amd64 | x86_64)
+				if [[ $IS_MAC == "True" ]]; then
+					wget "https://dl.google.com/go/${version}.darwin-amd64.tar.gz" -O "/tmp/${version}.darwin-amd64.tar.gz" &>/dev/null
+					$SUDO tar -C /usr/local -xzf "/tmp/${version}.darwin-amd64.tar.gz" &>/dev/null
+				else
+					wget "https://dl.google.com/go/${version}.linux-amd64.tar.gz" -O "/tmp/${version}.linux-amd64.tar.gz" &>/dev/null
+					$SUDO tar -C /usr/local -xzf "/tmp/${version}.linux-amd64.tar.gz" &>/dev/null
 				fi
 				;;
 			*)
-				if [[ $IS_MAC == "True" ]]; then
-					if [[ $IS_ARM == "True" ]]; then
-						wget "https://dl.google.com/go/${version}.darwin-arm64.tar.gz" -O "/tmp/${version}.darwin-arm64.tar.gz" &>/dev/null
-						"$SUDO" tar -C /usr/local -xzf "/tmp/${version}.darwin-arm64.tar.gz" &>/dev/null
-					else
-						wget "https://dl.google.com/go/${version}.darwin-amd64.tar.gz" -O "/tmp/${version}.darwin-amd64.tar.gz" &>/dev/null
-						"$SUDO" tar -C /usr/local -xzf "/tmp/${version}.darwin-amd64.tar.gz" &>/dev/null
-					fi
-				else
-					wget "https://dl.google.com/go/${version}.linux-amd64.tar.gz" -O "/tmp/${version}.linux-amd64.tar.gz" &>/dev/null
-					"$SUDO" tar -C /usr/local -xzf "/tmp/${version}.linux-amd64.tar.gz" &>/dev/null
-				fi
+				echo -e "${bred}[!] Unsupported architecture. Please install go manually.${reset}"
+				exit 1
 				;;
 			esac
 
-			"$SUDO" ln -sf /usr/local/go/bin/go /usr/local/bin/ 2>/dev/null
+			$SUDO ln -sf /usr/local/go/bin/go /usr/local/bin/ 2>/dev/null
 			export GOROOT=/usr/local/go
 			export GOPATH="${HOME}/go"
 			export PATH="$GOPATH/bin:$GOROOT/bin:$HOME/.local/bin:$PATH"
@@ -425,11 +465,15 @@ function install_system_packages() {
 
 # Function to install required packages for Debian-based systems
 function install_apt() {
-	"$SUDO" apt update -y &>/dev/null
-	"$SUDO" DEBIAN_FRONTEND="noninteractive" apt install -y chromium-browser python3 python3-pip python3-virtualenv build-essential gcc cmake ruby whois git curl libpcap-dev wget zip python3-dev pv dnsutils libssl-dev libffi-dev libxml2-dev libxslt1-dev zlib1g-dev nmap jq apt-transport-https lynx medusa xvfb libxml2-utils procps bsdmainutils libdata-hexdump-perl libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxkbcommon-x11-0 libxcomposite-dev libxdamage1 libxrandr2 libgbm-dev libpangocairo-1.0-0 libasound2 &>/dev/null
+	$SUDO apt-get update -y &>/dev/null
+	$SUDO apt-get install -y python3 python3-pip python3-venv pipx python3-virtualenv build-essential gcc cmake ruby whois git curl libpcap-dev wget zip python3-dev pv dnsutils libssl-dev libffi-dev libxml2-dev libxslt1-dev zlib1g-dev nmap jq apt-transport-https lynx medusa xvfb libxml2-utils procps bsdmainutils libdata-hexdump-perl &>/dev/null
+	# Move chromium browser dependencies (required by `nuclei -headless -id screenshot`) into a separate apt install command, and add a fallback for Ubuntu 24.04 (where `libasound2` is renamed to `libasound2t64`)
+	$SUDO apt-get install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxkbcommon-x11-0 libxcomposite-dev libxdamage1 libxrandr2 libgbm-dev libpangocairo-1.0-0 libasound2 &>/dev/null ||
+		$SUDO apt-get install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxkbcommon-x11-0 libxcomposite-dev libxdamage1 libxrandr2 libgbm-dev libpangocairo-1.0-0 libasound2t64 &>/dev/null
 	curl https://sh.rustup.rs -sSf | sh -s -- -y >/dev/null 2>&1
 	source "${HOME}/.cargo/env"
 	cargo install ripgen &>/dev/null
+	pipx ensurepath -f &>/dev/null
 }
 
 # Function to install required packages for macOS
@@ -440,8 +484,7 @@ function install_brew() {
 		/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 	fi
 	brew update &>/dev/null
-	brew install --cask chromium &>/dev/null
-	brew install bash coreutils python massdns jq gcc cmake ruby git curl libpcap-dev wget zip python3-dev pv dnsutils whois libssl-dev libffi-dev libxml2-dev libxslt-dev zlib libnss3 atk bridge2.0 cups xkbcommon xcomposite xdamage xrandr gbm pangocairo alsa libxml2-utils &>/dev/null
+	brew install --formula bash coreutils gnu-getopt python pipx massdns jq gcc cmake ruby git curl wget zip pv bind whois nmap jq lynx medusa &>/dev/null
 	brew install rustup &>/dev/null
 	rustup-init -y &>/dev/null
 	cargo install ripgen &>/dev/null
@@ -449,8 +492,8 @@ function install_brew() {
 
 # Function to install required packages for RedHat-based systems
 function install_yum() {
-	"$SUDO" yum groupinstall "Development Tools" -y &>/dev/null
-	"$SUDO" yum install -y python3 python3-pip gcc cmake ruby git curl libpcap whois wget zip pv bind-utils openssl-devel libffi-devel libxml2-devel libxslt-devel zlib-devel nmap jq lynx medusa xorg-x11-server-xvfb &>/dev/null
+	$SUDO yum groupinstall "Development Tools" -y &>/dev/null
+	$SUDO yum install -y python3 python3-pip gcc cmake ruby git curl libpcap whois wget pipx zip pv bind-utils openssl-devel libffi-devel libxml2-devel libxslt-devel zlib-devel nmap jq lynx medusa xorg-x11-server-xvfb &>/dev/null
 	curl https://sh.rustup.rs -sSf | sh -s -- -y >/dev/null 2>&1
 	source "${HOME}/.cargo/env"
 	cargo install ripgen &>/dev/null
@@ -458,7 +501,7 @@ function install_yum() {
 
 # Function to install required packages for Arch-based systems
 function install_pacman() {
-	"$SUDO" pacman -Sy --noconfirm python python-pip base-devel gcc cmake ruby git curl libpcap whois wget zip pv bind openssl libffi libxml2 libxslt zlib nmap jq lynx medusa xorg-server-xvfb &>/dev/null
+	$SUDO pacman -Sy --noconfirm python python-pip base-devel gcc cmake ruby git curl libpcap python-pipx whois wget zip pv bind openssl libffi libxml2 libxslt zlib nmap jq lynx medusa xorg-server-xvfb &>/dev/null
 	curl https://sh.rustup.rs -sSf | sh -s -- -y >/dev/null 2>&1
 	source "${HOME}/.cargo/env"
 	cargo install ripgen &>/dev/null
@@ -485,9 +528,8 @@ function initial_setup() {
 	touch "${dir}/.github_tokens"
 	touch "${dir}/.gitlab_tokens"
 
-	wget -N -c https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py &>/dev/null
-	python3 /tmp/get-pip.py &>/dev/null
-	rm -f /tmp/get-pip.py
+	eval pipx ensurepath $DEBUG_STD
+	source "${HOME}/${profile_shell}"
 
 	install_tools
 
@@ -497,15 +539,11 @@ function initial_setup() {
 	# Nuclei Templates
 	if [[ ! -d ${NUCLEI_TEMPLATES_PATH} ]]; then
 		#printf "${yellow}Cloning Nuclei templates...${reset}\n"
-		eval git clone https://github.com/projectdiscovery/nuclei-templates.git "${NUCLEI_TEMPLATES_PATH}" $DEBUG_STD
-		eval git clone https://github.com/geeknik/the-nuclei-templates.git "${NUCLEI_TEMPLATES_PATH}/extra_templates" $DEBUG_STD
 		eval git clone https://github.com/projectdiscovery/fuzzing-templates ${tools}/fuzzing-templates $DEBUG_STD
-		eval nuclei -update-templates update-template-dir "${NUCLEI_TEMPLATES_PATH}" $DEBUG_STD
-	else
-		#printf "${yellow}Updating Nuclei templates...${reset}\n"
 		eval git -C "${NUCLEI_TEMPLATES_PATH}" pull $DEBUG_STD
 		eval git -C "${NUCLEI_TEMPLATES_PATH}/extra_templates" pull $DEBUG_STD
 		eval git -C "${tools}/fuzzing-templates" pull $DEBUG_STD
+		eval nuclei -update-templates update-template-dir "${NUCLEI_TEMPLATES_PATH}" $DEBUG_STD
 	fi
 
 	# sqlmap
@@ -515,15 +553,6 @@ function initial_setup() {
 	else
 		#printf "${yellow}Updating sqlmap...${reset}\n"
 		eval git -C "${dir}/sqlmap" pull $DEBUG_STD
-	fi
-
-	# testssl.sh
-	if [[ ! -d "${dir}/testssl.sh" ]]; then
-		#printf "${yellow}Cloning testssl.sh...${reset}\n"
-		eval git clone --depth 1 https://github.com/drwetter/testssl.sh.git "${dir}/testssl.sh" $DEBUG_STD
-	else
-		#printf "${yellow}Updating testssl.sh...${reset}\n"
-		eval git -C "${dir}/testssl.sh" pull $DEBUG_STD
 	fi
 
 	# massdns
@@ -536,26 +565,6 @@ function initial_setup() {
 	else
 		#printf "${yellow}Updating massdns...${reset}\n"
 		eval git -C "${dir}/massdns" pull $DEBUG_STD
-	fi
-
-	# Interlace
-	if [[ ! -d "${dir}/interlace" ]]; then
-		#printf "${yellow}Cloning Interlace...${reset}\n"
-		eval git clone https://github.com/codingo/Interlace.git "${dir}/interlace" $DEBUG_STD
-		eval cd "${dir}/interlace" && eval $SUDO python3 setup.py install $DEBUG_STD
-	else
-		#printf "${yellow}Updating Interlace...${reset}\n"
-		eval git -C "${dir}/interlace" pull $DEBUG_STD
-	fi
-
-	# wafw00f
-	if [[ ! -d "${dir}/wafw00f" ]]; then
-		#printf "${yellow}Cloning wafw00f...${reset}\n"
-		eval git clone https://github.com/EnableSecurity/wafw00f.git "${dir}/wafw00f" $DEBUG_STD
-		eval cd "${dir}/wafw00f" && eval $SUDO python3 setup.py install $DEBUG_STD
-	else
-		#printf "${yellow}Updating wafw00f...${reset}\n"
-		eval git -C "${dir}/wafw00f" pull $DEBUG_STD
 	fi
 
 	# gf patterns
@@ -574,27 +583,34 @@ function initial_setup() {
 
 	# Download required files with error handling
 	declare -A downloads=(
-		["notify_provider_config"]="https://gist.githubusercontent.com/six2dez/23a996bca189a11e88251367e6583053/raw ${HOME}/.config/notify/provider-config.yaml"
-		["getjswords"]="https://raw.githubusercontent.com/m4ll0k/Bug-Bounty-Toolz/master/getjswords.py ${tools}/getjswords.py"
-		["subdomains_huge"]="https://raw.githubusercontent.com/n0kovo/n0kovo_subdomains/main/n0kovo_subdomains_huge.txt ${subs_wordlist_big}"
-		["trusted_resolvers"]="https://gist.githubusercontent.com/six2dez/ae9ed7e5c786461868abd3f2344401b6/raw ${resolvers_trusted}"
-		["resolvers"]="https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt ${resolvers}"
-		["subs_wordlist"]="https://gist.github.com/six2dez/a307a04a222fab5a57466c51e1569acf/raw ${subs_wordlist}"
-		["permutations_list"]="https://gist.github.com/six2dez/ffc2b14d283e8f8eff6ac83e20a3c4b4/raw ${tools}/permutations_list.txt"
-		["fuzz_wordlist"]="https://raw.githubusercontent.com/six2dez/OneListForAll/main/onelistforallmicro.txt ${fuzz_wordlist}"
-		["lfi_wordlist"]="https://gist.githubusercontent.com/six2dez/a89a0c7861d49bb61a09822d272d5395/raw ${lfi_wordlist}"
-		["ssti_wordlist"]="https://gist.githubusercontent.com/six2dez/ab5277b11da7369bf4e9db72b49ad3c1/raw ${ssti_wordlist}"
-		["headers_inject"]="https://gist.github.com/six2dez/d62ab8f8ffd28e1c206d401081d977ae/raw ${tools}/headers_inject.txt"
-		["axiom_config"]="https://gist.githubusercontent.com/six2dez/6e2d9f4932fd38d84610eb851014b26e/raw ${tools}/axiom_config.sh"
+	    ["notify_provider_config"]="https://gist.githubusercontent.com/six2dez/23a996bca189a11e88251367e6583053/raw ${HOME}/.config/notify/provider-config.yaml"
+	    ["getjswords"]="https://raw.githubusercontent.com/m4ll0k/Bug-Bounty-Toolz/master/getjswords.py ${tools}/getjswords.py"
+	    ["subdomains_huge"]="https://raw.githubusercontent.com/n0kovo/n0kovo_subdomains/main/n0kovo_subdomains_huge.txt ${subs_wordlist_big}"
+	    ["trusted_resolvers"]="https://gist.githubusercontent.com/six2dez/ae9ed7e5c786461868abd3f2344401b6/raw ${resolvers_trusted}"
+	    ["resolvers"]="https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt ${resolvers}"
+	    ["subs_wordlist"]="https://gist.github.com/six2dez/a307a04a222fab5a57466c51e1569acf/raw ${subs_wordlist}"
+	    ["permutations_list"]="https://gist.github.com/six2dez/ffc2b14d283e8f8eff6ac83e20a3c4b4/raw ${tools}/permutations_list.txt"
+	    ["fuzz_wordlist"]="https://raw.githubusercontent.com/six2dez/OneListForAll/main/onelistforallmicro.txt ${fuzz_wordlist}"
+	    ["lfi_wordlist"]="https://gist.githubusercontent.com/six2dez/a89a0c7861d49bb61a09822d272d5395/raw ${lfi_wordlist}"
+	    ["ssti_wordlist"]="https://gist.githubusercontent.com/six2dez/ab5277b11da7369bf4e9db72b49ad3c1/raw ${ssti_wordlist}"
+	    ["headers_inject"]="https://gist.github.com/six2dez/d62ab8f8ffd28e1c206d401081d977ae/raw ${tools}/headers_inject.txt"
+	    ["axiom_config"]="https://gist.githubusercontent.com/six2dez/6e2d9f4932fd38d84610eb851014b26e/raw ${tools}/axiom_config.sh"
 	)
-
+	
 	for key in "${!downloads[@]}"; do
-		url="${downloads[$key]% *}"
-		destination="${downloads[$key]#* }"
-		wget -q -O "$destination" "$url" || {
-			echo -e "${red}[!] Failed to download $key from $url.${reset}"
-			continue
-		}
+	    url="${downloads[$key]% *}"
+	    destination="${downloads[$key]#* }"
+	
+	    # Skip download if provider-config.yaml already exists
+	    if [[ "$key" == "notify_provider_config" && -f "$destination" ]]; then
+	        echo -e "[${yellow}SKIPPING${reset}] $key as it already exists at $destination.${reset}"
+	        continue
+	    fi
+	
+	    wget -q -O "$destination" "$url" || {
+	        echo -e "${red}[!] Failed to download $key from $url.${reset}"
+	        continue
+	    }
 	done
 
 	# Make axiom_config.sh executable
@@ -633,7 +649,7 @@ function initial_setup() {
 
 	# Strip all Go binaries and copy to /usr/local/bin
 	strip -s "${GOPATH}/bin/"* &>/dev/null || true
-	"$SUDO" cp "${GOPATH}/bin/"* /usr/local/bin/ &>/dev/null || true
+	$SUDO cp "${GOPATH}/bin/"* /usr/local/bin/ &>/dev/null || true
 
 	# Final reminders
 	echo -e "${yellow}Remember to set your API keys:\n- subfinder (${HOME}/.config/subfinder/provider-config.yaml)\n- GitHub (${HOME}/Tools/.github_tokens)\n- GitLab (${HOME}/Tools/.gitlab_tokens)\n- SSRF Server (COLLAB_SERVER in reconftw.cfg or env var)\n- Blind XSS Server (XSS_SERVER in reconftw.cfg or env var)\n- notify (${HOME}/.config/notify/provider-config.yaml)\n- WHOISXML API (WHOISXML_API in reconftw.cfg or env var)\n${reset}"
